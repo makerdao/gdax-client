@@ -26,6 +26,9 @@ import websocket
 from pymaker.numeric import Wad
 
 
+GDAX_WS_URL = "wss://ws-feed.pro.coinbase.com"
+
+
 class GdaxPriceClient:
     logger = logging.getLogger()
 
