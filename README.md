@@ -1,6 +1,9 @@
 # gdax-client
 
-TODO
+`gdax-client` is a simple library for accessing price feeds from _coinbase_ (former GDAX) WebSocket.
+
+It handles WebSocket reconnection very reliably. It also automatically expires the price value
+if the client isn't able to connect to the WebSocket for at least `expiry` seconds.
 
 
 ## Installation
