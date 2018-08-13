@@ -25,7 +25,7 @@ logging.basicConfig(format='%(asctime)-15s %(levelname)-8s %(message)s', level=l
 logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.INFO)
 
-price_client = GdaxPriceClient("wss://ws-feed.gdax.com", "ETH-USD", 120)
+price_client = GdaxPriceClient("wss://ws-feed.pro.coinbase.com", "ETH-USD", 120)
 
 while True:
     logging.info(f"Current price is: {price_client.get_price()}")
