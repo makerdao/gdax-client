@@ -68,7 +68,6 @@ class GdaxPriceClient:
         self.logger.info(f"GDAX {self.product_id} WebSocket disconnected")
 
     def _on_message(self, ws, message):
-        print(message)
         try:
             message_obj = json.loads(message)
             if message_obj['type'] == 'subscriptions':
