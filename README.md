@@ -23,4 +23,4 @@ For some known Ubuntu and macOS issues see the [pymaker](https://github.com/make
 
 ## License
 
-See [COPYING](https://github.com/LiquidityProviders/gdax-client/blob/master/COPYING) file.
+See [COPYING](https://github.com/makerdao/gdax-client/blob/master/COPYING) file.
