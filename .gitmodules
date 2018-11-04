@@ -1,3 +1,0 @@
-[submodule "lib/pymaker"]
-	path = lib/pymaker
-	url = https://github.com/makerdao/pymaker.git

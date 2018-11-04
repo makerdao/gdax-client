@@ -17,11 +17,8 @@ In order to clone the project and install required third-party packages please e
 ```
 git clone https://github.com/makerdao/gdax-client.git
 cd gdax-client
-git submodule update --init --recursive
 pip3 install -r requirements.txt
 ```
-
-For some known Ubuntu and macOS issues see the [pymaker](https://github.com/makerdao/pymaker) README.
 
 
 ## License

@@ -19,11 +19,10 @@ import json
 import logging
 import threading
 import time
+from decimal import Decimal
 from typing import Optional
 
 import websocket
-
-from pymaker.numeric import Wad
 
 
 GDAX_WS_URL = "wss://ws-feed.pro.coinbase.com"
@@ -84,7 +83,7 @@ class GdaxPriceClient:
     def _on_error(self, ws, error):
         self.logger.info(f"GDAX {self.product_id} WebSocket error: '{error}'")
 
-    def get_price(self) -> Optional[Wad]:
+    def get_price(self) -> Optional[Decimal]:
         if time.time() - self._last_timestamp > self.expiry:
             if not self._expired:
                 self.logger.warning(f"Price feed from GDAX ({self.product_id}) has expired")
@@ -98,7 +97,7 @@ class GdaxPriceClient:
             return value
 
     def _process_ticker(self, message_obj):
-        self._last_price = Wad.from_number(message_obj['price'])
+        self._last_price = Decimal(message_obj['price'])
         self._last_timestamp = time.time()
 
         self.logger.debug(f"Price feed from GDAX is {self._last_price} ({self.product_id})")
