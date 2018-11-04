@@ -1,5 +1,8 @@
 # gdax-client
 
+[![Build Status](https://travis-ci.org/makerdao/gdax-client.svg?branch=master)](https://travis-ci.org/makerdao/gdax-client)
+[![codecov](https://codecov.io/gh/makerdao/gdax-client/branch/master/graph/badge.svg)](https://codecov.io/gh/makerdao/gdax-client)
+
 `gdax-client` is a simple library for accessing price feeds from _coinbase_ (former GDAX) WebSocket.
 
 It handles WebSocket reconnection very reliably. It also automatically expires the price value
