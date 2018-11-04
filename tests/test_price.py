@@ -18,14 +18,24 @@
 import logging
 import time
 
+import pytest
+
 from gdax_client.price import GdaxPriceClient, GDAX_WS_URL
 
-logging.basicConfig(format='%(asctime)-15s %(levelname)-8s %(message)s', level=logging.DEBUG)
-logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
-logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.INFO)
 
-price_client = GdaxPriceClient(GDAX_WS_URL, "ETH-USD", 120)
+@pytest.mark.timeout(20)
+def test_gdax_price_feed_client():
 
-while True:
-    logging.info(f"Current price is: {price_client.get_price()}")
-    time.sleep(1)
+    logging.basicConfig(format='%(asctime)-15s %(levelname)-8s %(message)s', level=logging.DEBUG)
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
+    logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.INFO)
+
+    price_client = GdaxPriceClient(GDAX_WS_URL, "ETH-USD", 120)
+
+    while True:
+        price = price_client.get_price()
+        logging.info(f"Current price is: {price}")
+        if price is not None:
+            break
+
+        time.sleep(1)
