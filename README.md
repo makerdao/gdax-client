@@ -11,7 +11,7 @@ if the client isn't able to connect to the WebSocket for at least `expiry` secon
 
 ## Installation
 
-This project uses *Python 3.6.2*.
+This project uses *Python 3.6.6*.
 
 In order to clone the project and install required third-party packages please execute:
 ```
