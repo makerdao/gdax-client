@@ -19,8 +19,10 @@ import json
 import logging
 import threading
 import time
-from decimal import Decimal
+from decimal import *
 from typing import Optional
+from sortedcontainers import SortedDict
+from operator import neg
 
 import websocket
 
@@ -41,7 +43,11 @@ class GdaxPriceClient:
         self.expiry = expiry
         self._last_price = None
         self._last_timestamp = 0
+        self._last_obook_timestamp = 0
         self._expired = True
+        self._obook_expired = True
+        self._asks = None
+        self._bids = None
         threading.Thread(target=self._background_run, daemon=True).start()
 
     def _background_run(self):
@@ -60,8 +66,9 @@ class GdaxPriceClient:
             "type": "subscribe",
             "channels": [
                 { "name": "ticker", "product_ids": ["%s"] },
-                { "name": "heartbeat", "product_ids": ["%s"] }
-            ]}""" % (self.product_id, self.product_id))
+                { "name": "heartbeat", "product_ids": ["%s"] },
+                { "name": "level2", "product_ids": ["%s"] }
+            ]}""" % (self.product_id, self.product_id, self.product_id))
 
     def _on_close(self, ws):
         self.logger.info(f"GDAX {self.product_id} WebSocket disconnected")
@@ -71,10 +78,19 @@ class GdaxPriceClient:
             message_obj = json.loads(message)
             if message_obj['type'] == 'subscriptions':
                 pass
+
             elif message_obj['type'] == 'ticker':
                 self._process_ticker(message_obj)
+
             elif message_obj['type'] == 'heartbeat':
                 self._process_heartbeat()
+
+            elif message_obj['type'] == 'snapshot':
+                self._process_snapshot(message_obj)
+
+            elif message_obj['type'] == 'l2update':
+                self._process_l2update(message_obj)
+
             else:
                 self.logger.warning(f"GDAX {self.product_id} WebSocket received unknown message type: '{message}'")
         except:
@@ -87,7 +103,6 @@ class GdaxPriceClient:
         if time.time() - self._last_timestamp > self.expiry:
             if not self._expired:
                 self.logger.warning(f"Price feed from GDAX ({self.product_id}) has expired")
-                self._expired = True
 
             return None
 
@@ -96,15 +111,87 @@ class GdaxPriceClient:
 
             return value
 
+    def get_obook_price(self):
+        '''
+        get_obook_price process
+        * if price feed is expired return None
+        * else do best ask + best bid then divide by 2 for midpoint
+        '''
+        if time.time() - self._last_obook_timestamp > self.expiry:
+            if not self._obook_expired:
+                self.logger.warning(f"Orderbook price feed from GDAX ({self.product_id}) has expired")
+
+            return None
+
+        else:
+            mid_point = Decimal((self._asks.peekitem(0)[0] + self._bids.peekitem(0)[0])/2)
+            return mid_point
+
+
     def _process_ticker(self, message_obj):
         self._last_price = Decimal(message_obj['price'])
         self._last_timestamp = time.time()
 
-        self.logger.debug(f"Price feed from GDAX is {self._last_price} ({self.product_id})")
+        self.logger.debug(f"Ticker price feed from GDAX is {self._last_price} ({self.product_id})")
 
         if self._expired:
-            self.logger.info(f"Price feed from GDAX ({self.product_id}) became available")
+            self.logger.info(f"Ticker price feed from GDAX ({self.product_id}) became available")
             self._expired = False
+
+
+    def _process_snapshot(self, message_obj):
+        #NOTES: quantize is what allows us to specify decimal place
+
+        def _load_book(side, new_side):
+
+            for order in side:
+                new_side[Decimal(order[0]).quantize(Decimal('1.00000000'))] = Decimal(order[1])
+
+            return new_side
+
+        self._bids = _load_book(message_obj['bids'], SortedDict(neg))
+        self._asks = _load_book(message_obj['asks'], SortedDict())
+        self._last_obook_timestamp = time.time()
+
+        if self._obook_expired:
+            self.logger.info(f"Orderbook price feed from GDAX ({self.product_id}) became available")
+            self._obook_expired = False
+
+    def _process_l2update(self, message_obj):
+
+        for change in message_obj['changes']:
+            side = change[0]
+            if side == 'buy':
+                self._bids = self._update_book(self._bids, Decimal(change[1]), Decimal(change[2]))
+            if side == 'sell':
+                self._asks = self._update_book(self._asks, Decimal(change[1]), Decimal(change[2]))
+
+        self._last_obook_timestamp = time.time()
 
     def _process_heartbeat(self):
         self._last_timestamp = time.time()
+
+    def _update_book(self, orderb_side, price, amount):
+        '''
+        update_book process (utilizes SortedContainer)
+        * if amount in incoming update = 0 -> remove
+        * else if price already exists in book update amount
+        * else order does not exist -> add
+
+        return self._bids or self._asks
+        '''
+
+        if amount == Decimal('0'):
+            orderb_side.__delitem__(price)
+
+        elif orderb_side.__contains__(price):
+            orderb_side.update({price: amount})
+
+        else:
+            orderb_side[price] = amount
+
+        self.logger.debug(f"Orderbook price feed from GDAX is {self.get_obook_price()} ({self.product_id})")
+
+        return orderb_side
+
+

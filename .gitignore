@@ -1,6 +1,7 @@
 .idea
 *.iml
 
+_virtualenv/
 __pycache__
 .cache
 .coverage
