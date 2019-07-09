@@ -115,8 +115,7 @@ class GdaxPriceClient:
         '''
         get_obook_price process
         * if price feed is expired return None
-        * else do best ask - best bid then divide by 2 for price_diff
-        * return best bid + price_diff
+        * else do best ask + best bid then divide by 2 for midpoint
         '''
         if time.time() - self._last_obook_timestamp > self.expiry:
             if not self._obook_expired:
@@ -125,8 +124,8 @@ class GdaxPriceClient:
             return None
 
         else:
-            price_diff = Decimal((self._asks.peekitem(0)[0] - self._bids.peekitem(0)[0])/2)
-            return self._bids.peekitem(0)[0] + price_diff
+            mid_point = Decimal((self._asks.peekitem(0)[0] + self._bids.peekitem(0)[0])/2)
+            return mid_point
 
 
     def _process_ticker(self, message_obj):
