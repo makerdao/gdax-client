@@ -1,2 +1,2 @@
 websocket-client == 0.46.0
-sortedcontainers == 0.9.6
+sortedcontainers == 2.1.0
